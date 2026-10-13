@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Turn a situation into a classic meme." />
+    <title>SITU-MEME Generator</title>
+    <style>
+      :root { color-scheme: dark; --bg: #0b1020; --surface: #141b31; --line: #2c3759; --text: #f5f7ff; --muted: #aab5d6; --accent: #8b5cf6; --accent-2: #22d3ee; --danger: #fda4af; }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 32px 18px; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at top right, #282050 0, transparent 34%), radial-gradient(circle at bottom left, #123d52 0, transparent 32%), var(--bg); }
+      main { width: min(100%, 780px); }
+      header { text-align: center; margin-bottom: 28px; }
+      h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); letter-spacing: -0.07em; }
+      .tagline { margin: 10px 0 0; color: var(--muted); font-size: 1.05rem; }
+      .card { padding: clamp(20px, 5vw, 36px); border: 1px solid var(--line); border-radius: 24px; background: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: 0 20px 70px #05081788; backdrop-filter: blur(12px); }
+      label { display: block; margin-bottom: 10px; font-weight: 700; }
+      textarea { width: 100%; min-height: 150px; resize: vertical; padding: 16px; border: 1px solid var(--line); border-radius: 14px; outline: none; color: var(--text); font: inherit; line-height: 1.5; background: #0d1428; transition: border-color .2s, box-shadow .2s; }
+      textarea:focus { border-color: var(--accent-2); box-shadow: 0 0 0 3px #22d3ee25; }
+      .controls { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 14px; }
+      .count { color: var(--muted); font-size: .875rem; }
+      button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 46px; padding: 0 20px; border: 0; border-radius: 12px; cursor: pointer; color: white; font: inherit; font-weight: 800; background: linear-gradient(135deg, var(--accent), #6366f1); box-shadow: 0 10px 26px #6d43e455; transition: transform .16s, opacity .16s; }
+      button:hover:not(:disabled) { transform: translateY(-2px); }
+      button:disabled { cursor: wait; opacity: .7; }
+      .result { margin-top: 26px; }
+      .status { min-height: 24px; margin: 0 0 14px; color: var(--muted); text-align: center; }
+      .status.error { color: var(--danger); }
+      .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ffffff55; border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+      .image-wrap { overflow: hidden; display: none; border: 1px solid var(--line); border-radius: 16px; background: #090e1d; }
+      .image-wrap.visible { display: block; }
+      img { display: block; width: 100%; max-height: 620px; object-fit: contain; }
+      .template { margin: 10px 0 0; text-align: center; color: var(--muted); font-size: .9rem; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (max-width: 520px) { .controls { align-items: stretch; flex-direction: column; } button { width: 100%; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>SITU-MEME Generator</h1>
+        <p class="tagline">Turn an awkward moment into an internet classic.</p>
+      </header>
+      <section class="card" aria-labelledby="prompt-label">
+        <form id="meme-form">
+          <label id="prompt-label" for="situation">What happened?</label>
+          <textarea id="situation" name="situation" maxlength="700" required placeholder="e.g. I confidently presented the wrong tab during a company-wide demo." aria-describedby="character-count" autofocus></textarea>
+          <div class="controls">
+            <span class="count" id="character-count">0 / 700</span>
+            <button id="generate-button" type="submit"><span>Generate Meme</span></button>
+          </div>
+        </form>
+        <section class="result" aria-live="polite" aria-atomic="true">
+          <p id="status" class="status"></p>
+          <div id="image-wrap" class="image-wrap">
+            <img id="meme-image" alt="Generated meme" />
+          </div>
+          <p id="template" class="template"></p>
+        </section>
+      </section>
+    </main>
+    <script>
+      const form = document.querySelector("#meme-form");
+      const situation = document.querySelector("#situation");
+      const button = document.querySelector("#generate-button");
+      const count = document.querySelector("#character-count");
+      const status = document.querySelector("#status");
+      const imageWrap = document.querySelector("#image-wrap");
+      const image = document.querySelector("#meme-image");
+      const template = document.querySelector("#template");
+
+      function setLoading(isLoading) {
+        button.disabled = isLoading;
+        button.innerHTML = isLoading ? '<span class="spinner" aria-hidden="true"></span><span>Creating meme…</span>' : "<span>Generate Meme</span>";
+      }
+
+      function showStatus(message, isError = false) {
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+      }
+
+      situation.addEventListener("input", () => {
+        count.textContent = `${situation.value.length} / 700`;
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const value = situation.value.trim();
+        if (!value) {
+          showStatus("Please describe the situation first.", true);
+          situation.focus();
+          return;
+        }
+
+        setLoading(true);
+        showStatus("Finding the perfect template and writing the punchline…");
+        imageWrap.classList.remove("visible");
+        template.textContent = "";
+
+        try {
+          const response = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ situation: value })
+          });
+          const data = await response.json().catch(() => null);
+          if (!response.ok || !data?.success) {
+            throw new Error(data?.error?.message || "Could not generate a meme. Please try again.");
+          }
+
+          image.src = data.url;
+          image.alt = `Generated ${data.template} meme`;
+          imageWrap.classList.add("visible");
+          template.textContent = `Template: ${data.template}`;
+          showStatus("Your meme is ready.");
+        } catch (error) {
+          showStatus(error.message || "Could not generate a meme. Please try again.", true);
+        } finally {
+          setLoading(false);
+        }
+      });
+    </script>
+  </body>
+</html>
