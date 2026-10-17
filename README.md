@@ -76,6 +76,19 @@ when Imgflip is unavailable or not configured.
 
 ## API
 
+### `GET /api/health`
+
+Health check endpoint to verify server status.
+
+**Success response**
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-10-17T14:10:58.468Z"
+}
+```
+
 ### `POST /api/generate`
 
 Generate a meme from a situation description.
@@ -121,14 +134,43 @@ curl -X POST http://localhost:3000/api/generate \
   -d '{"situation":"I confidently presented the wrong tab during a company-wide demo."}'
 ```
 
+## Testing
+
+Run the automated test suite using Node's native test runner:
+
+```bash
+npm test
+```
+
 ## Project structure
 
 ```
 .
 ├── public/
-│   └── index.html   # Single-page front end (form, preview, status messages)
-├── server.js        # Express server and meme generation pipeline
-├── .env.example     # Environment variable template
+│   └── index.html           # Single-page front end (form, preview, status messages)
+├── src/
+│   ├── app.js               # Express application setup, routes & middleware assembly
+│   ├── config/
+│   │   └── env.js           # Environment variables, constants & config helpers
+│   ├── middleware/
+│   │   ├── errorHandler.js  # 404 and central error handling middleware
+│   │   └── requestLogger.js # Lightweight HTTP request logger
+│   ├── routes/
+│   │   ├── health.routes.js # /api/health check route
+│   │   ├── index.js         # API router aggregator
+│   │   └── meme.routes.js   # /api/generate route
+│   ├── services/
+│   │   ├── backboard.service.js # Backboard AI template selection and caption planning
+│   │   ├── gemini.service.js    # Google Gemini AI image generation fallback
+│   │   ├── imgflip.service.js   # Imgflip template caching, catalog fetching & captioning
+│   │   └── meme.service.js      # Multi-tier meme generation orchestrator
+│   └── utils/
+│       ├── AppError.js      # Custom error class with HTTP status and error codes
+│       └── helpers.js       # JSON parsing, fence stripping & fetch with timeout
+├── tests/
+│   └── health.test.js       # Automated tests (health check, 404, input validation)
+├── server.js                # Lean entry point, port binding & graceful shutdown
+├── .env.example             # Environment variable template
 └── package.json
 ```
 
@@ -139,5 +181,6 @@ curl -X POST http://localhost:3000/api/generate \
 - Requests to upstream services time out after 25 seconds.
 - Errors are returned with a stable `error.code` so the front end can show a
   friendly message.
-## sample output
-check out /output folder.
+
+## Sample output
+Check out `/output` folder.
