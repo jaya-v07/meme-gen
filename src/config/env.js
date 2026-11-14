@@ -10,7 +10,6 @@ export const config = {
   nanoBananaModel: process.env.NANO_BANANA_MODEL || "gemini-3.1-flash-image",
   imgflipUsername: process.env.IMGFLIP_USERNAME?.trim() || "",
   imgflipPassword: process.env.IMGFLIP_PASSWORD?.trim() || "",
-  backboardApiKey: process.env.BACKBOARD_API_KEY?.trim() || "",
   imgflipGetMemesUrl: "https://api.imgflip.com/get_memes",
   imgflipCaptionUrl: "https://api.imgflip.com/caption_image",
   templateCacheTtlMs: 60 * 60 * 1000,

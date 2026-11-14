@@ -1,11 +1,62 @@
-import { hasImgflipCredentials } from "../config/env.js";
-import { createMemePlan } from "./backboard.service.js";
+import { config, hasImgflipCredentials } from "../config/env.js";
 import {
   captionMeme,
   captionClassicMeme,
+  getTopMemeTemplates,
   isImgflipServiceFailure
 } from "./imgflip.service.js";
 import { generateGeminiMeme } from "./gemini.service.js";
+
+export function splitSituationIntoCaptions(situation) {
+  const trimmed = situation.trim();
+  const parts = trimmed
+    .split(/(?:[.,;!?]|\s+when\s+|\s+but\s+|\s+and\s+)/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return {
+      topText: parts[0].slice(0, 100),
+      bottomText: parts.slice(1).join(" ").slice(0, 100)
+    };
+  }
+
+  return {
+    topText: trimmed.slice(0, 100) || "When things happen",
+    bottomText: "This is fine"
+  };
+}
+
+export async function createMemePlan(situation) {
+  const { topText, bottomText } = splitSituationIntoCaptions(situation);
+  let template = null;
+  let trendingValid = false;
+
+  try {
+    const templates = await getTopMemeTemplates();
+    const situationLower = situation.toLowerCase();
+    const matched = templates.find((t) => {
+      const words = t.name.toLowerCase().split(/[\s_-]+/).filter((w) => w.length > 3);
+      return words.some((word) => situationLower.includes(word));
+    });
+
+    if (matched) {
+      template = matched;
+      trendingValid = true;
+    }
+  } catch (err) {
+    console.warn("Could not retrieve trending templates for matching:", err.message);
+  }
+
+  const classic = config.classicTemplates[0];
+  return {
+    templateName: template ? template.name : classic.name,
+    imgflipId: template ? template.id : classic.id,
+    topText,
+    bottomText,
+    trendingValid
+  };
+}
 
 export async function generateMemePipeline(situation) {
   const plan = await createMemePlan(situation);

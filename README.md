@@ -11,9 +11,8 @@ returns a finished image.
 The server runs a three-tier pipeline so you get a meme even when one service
 is unavailable:
 
-1. **Plan** — It loads the current top Imgflip templates (cached for one hour)
-   and asks an LLM (via Backboard, with web search enabled) to choose the
-   best-fitting template and write `topText` / `bottomText`.
+1. **Plan** — It analyzes the situation, extracts captions, and matches with
+   trending Imgflip templates (cached for one hour) or defaults to classic templates.
 2. **Caption (Tier 1)** — It renders the chosen trending Imgflip template with
    the generated captions.
 3. **Caption (Tier 2)** — If that fails, it tries the built-in classic
@@ -60,19 +59,17 @@ npm run dev
 
 Set these in `.env` (see `.env.example` for a template).
 
-| Variable            | Required | Description                                                                 |
-| ------------------- | -------- | --------------------------------------------------------------------------- |
-| `PORT`              | No       | Port the server listens on. Defaults to `3000`.                             |
-| `BACKBOARD_API_KEY` | Yes\*    | Key for the Backboard LLM that picks the template and writes captions.      |
-| `IMGFLIP_USERNAME`  | No       | Imgflip account username, needed to render captioned memes.                 |
-| `IMGFLIP_PASSWORD`  | No       | Imgflip account password.                                                   |
-| `GEMINI_API_KEY`    | No       | Google Gemini key used for the image-generation fallback.                   |
-| `GEMINI_MODEL`      | No       | Gemini model for the fallback. Defaults to `gemini-2.5-flash`.              |
+| Variable           | Required | Description                                                    |
+| ------------------ | -------- | -------------------------------------------------------------- |
+| `PORT`             | No       | Port the server listens on. Defaults to `3000`.                |
+| `IMGFLIP_USERNAME` | No       | Imgflip account username, needed to render captioned memes.    |
+| `IMGFLIP_PASSWORD` | No       | Imgflip account password.                                      |
+| `GEMINI_API_KEY`   | No       | Google Gemini key used for the image-generation fallback.      |
+| `GEMINI_MODEL`     | No       | Gemini model for the fallback. Defaults to `gemini-2.5-flash`. |
 
-\* If `BACKBOARD_API_KEY` is missing, the app still serves requests using a
-classic fallback plan. Imgflip credentials are optional — without them the app
-skips the Imgflip tiers and goes straight to Gemini. Gemini is required only
-when Imgflip is unavailable or not configured.
+Imgflip credentials are optional — without them the app skips the Imgflip tiers
+and goes straight to Gemini. Gemini is required only when Imgflip is unavailable
+or not configured.
 
 ## API
 
@@ -160,7 +157,6 @@ npm test
 │   │   ├── index.js         # API router aggregator
 │   │   └── meme.routes.js   # /api/generate route
 │   ├── services/
-│   │   ├── backboard.service.js # Backboard AI template selection and caption planning
 │   │   ├── gemini.service.js    # Google Gemini AI image generation fallback
 │   │   ├── imgflip.service.js   # Imgflip template caching, catalog fetching & captioning
 │   │   └── meme.service.js      # Multi-tier meme generation orchestrator

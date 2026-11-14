@@ -13,7 +13,7 @@ The current application uses:
 - Node.js with ES modules and Express 5.
 - `server.js` as the primary backend.
 - `public/index.html` as a vanilla HTML/CSS/JavaScript frontend.
-- Backboard AI for choosing meme templates and generating captions.
+- Template selection and caption planning.
 - Imgflip for obtaining templates and rendering captioned memes.
 - Google Gemini through `@google/genai` as an original-image generation fallback.
 - An in-memory template cache with a one-hour TTL.

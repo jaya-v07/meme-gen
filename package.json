@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@google/genai": "^2.29.0",
-    "backboard-sdk": "^1.5.19",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "node-fetch": "^3.3.2"
