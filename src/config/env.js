@@ -33,3 +33,7 @@ export function getRequiredEnv(name) {
 export function hasImgflipCredentials() {
   return Boolean(process.env.IMGFLIP_USERNAME?.trim() && process.env.IMGFLIP_PASSWORD?.trim());
 }
+
+export function hasGeminiApiKey() {
+  return Boolean(process.env.GEMINI_API_KEY?.trim() || config.geminiApiKey);
+}
